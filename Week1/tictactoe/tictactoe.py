@@ -59,31 +59,100 @@ def result(board, action):
     i, j = action
     newBoard = copy.deepcopy(board)
     newBoard[i][j] = player(board)
+    return newBoard
 
 
 def winner(board):
     """
     Returns the winner of the game, if there is one.
     """
-    raise NotImplementedError
+    lines = []
+
+    # Rows
+    lines.extend(board)
+
+    # Columns
+    for j in range(3):
+        lines.append([board[i][j] for i in range(3)])
+
+    # Diagonals
+    lines.append([board[i][i] for i in range(3)])
+    lines.append([board[i][2 - i] for i in range(3)])
+
+    # Check if any line has same player
+    for line in lines:
+        if line == [X, X, X]:
+            return X
+        if line == [O, O, O]:
+            return O
+    return None
+
 
 
 def terminal(board):
     """
     Returns True if game is over, False otherwise.
     """
-    raise NotImplementedError
+    if winner(board) is not None:
+        return True
+    if all(cell is not EMPTY for row in board for cell in row):
+        return True
+    return False
 
 
 def utility(board):
     """
     Returns 1 if X has won the game, -1 if O has won, 0 otherwise.
     """
-    raise NotImplementedError
+    w = winner(board)
+    if w == X:
+        return 1
+    elif w == O:
+        return -1
+    else:
+        return 0
 
 
 def minimax(board):
     """
     Returns the optimal action for the current player on the board.
     """
-    raise NotImplementedError
+    if terminal(board):
+        return None
+
+    turn = player(board)
+
+    def max_value(state):
+        if terminal(state):
+            return utility(state)
+        v = -math.inf
+        for a in actions(state):
+            v = max(v, min_value(result(state, a)))
+        return v
+
+    def min_value(state):
+        if terminal(state):
+            return utility(state)
+        v = math.inf
+        for a in actions(state):
+            v = min(v, max_value(result(state, a)))
+        return v
+
+    best_action = None
+
+    if turn == X:
+        best_val = -math.inf
+        for a in actions(board):
+            move_val = min_value(result(board, a))
+            if move_val > best_val:
+                best_val = move_val
+                best_action = a
+    else:
+        best_val = math.inf
+        for a in actions(board):
+            move_val = max_value(result(board, a))
+            if move_val < best_val:
+                best_val = move_val
+                best_action = a
+
+    return best_action
